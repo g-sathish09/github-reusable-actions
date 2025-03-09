@@ -3,24 +3,26 @@ on:
   workflow_call:
 run-name: ${{ github.sha }} | ${{ github.event.head_commit.message }}
 jobs:
+  UNIT-TESTS:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          echo npm test
+
   build:
     runs-on: self-hosted
+    needs: UNIT-TESTS
     steps:
       - uses: actions/checkout@v4
       - run: |
-          echo
-
-  tests:
-    runs-on: self-hosted
-    needs: build
-    steps:
-      - uses: actions/checkout@v4
-      - run: |
-          echo
+          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 897722697588.dkr.ecr.us-east-1.amazonaws.com
+          docker build -t 897722697588.dkr.ecr.us-east-1.amazonaws.com/roboshop-cart:${{ github.sha }} .
+          docker push 897722697588.dkr.ecr.us-east-1.amazonaws.com/roboshop-cart:${{ github.sha }}
 
   DEV:
     runs-on: self-hosted
-    needs: tests
+    needs: build
     environment: DEV
     steps:
       - uses: actions/checkout@v4
@@ -36,16 +38,23 @@ jobs:
       - run: |
           echo
 
-
-  UAT:
+  E2E-TESTS:
     runs-on: self-hosted
-    needs: QA
-    environment: UAT
+    needs: DEV
+    environment: QA
     steps:
       - uses: actions/checkout@v4
       - run: |
           echo
 
+  UAT:
+    runs-on: self-hosted
+    needs: QA
+    environment: E2E-TESTS
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          echo
 
   PROD:
     runs-on: self-hosted
@@ -55,3 +64,4 @@ jobs:
       - uses: actions/checkout@v4
       - run: |
           echo
+##

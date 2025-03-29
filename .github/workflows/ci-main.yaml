@@ -52,7 +52,7 @@ jobs:
 
   E2E-TESTS:
     runs-on: self-hosted
-    needs: DEV
+    needs: QA
     environment: QA
     steps:
       - uses: actions/checkout@v4

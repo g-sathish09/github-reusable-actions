@@ -21,10 +21,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: |
-          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 975050062321.dkr.ecr.us-east-1.amazonaws.com          
-          
-          aws ecr   describe-images --repository-name roboshop-${{ inputs.componentName }} | grep ${{ github.sha }} &>/dev/null
-          if [ $? -ne 0 ]; then
+          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 975050062321.dkr.ecr.us-east-1.amazonaws.com                    
+          e=$(aws ecr   describe-images --repository-name roboshop-${{ inputs.componentName }} | grep ${{ github.sha }} | wc -l)
+          if [ $e -eq 0 ]; then
             docker build -t 975050062321.dkr.ecr.us-east-1.amazonaws.com/roboshop-${{ inputs.componentName }}:${{ github.sha }} .
             docker push 975050062321.dkr.ecr.us-east-1.amazonaws.com/roboshop-${{ inputs.componentName }}:${{ github.sha }}
           fi

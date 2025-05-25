@@ -8,6 +8,8 @@ on:
     secrets:
       NR_API_KEY:
         required: true
+      VAULT_TOKEN:
+        required: true
 
 
 run-name: ${{ github.sha }} | ${{ github.event.head_commit.message }}

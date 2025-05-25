@@ -19,22 +19,52 @@ jobs:
       - run: |
           echo npm test
 
-  build:
+  SECURITY-SCANS:
     runs-on: self-hosted
     needs: UNIT-TESTS
     steps:
       - uses: actions/checkout@v4
+      - name: Import SonarQube Secrets
+        id: sonarqube
+        uses: hashicorp/vault-action@v2
+        with:
+          url: http://vault-internal.harsharoboticshop.online:8200
+          token: ${{ secrets.VAULT_TOKEN }}
+          secrets: |
+            infra-secrets/data/sonarqube username | sonar_user ;
+            infra-secrets/data/sonarqube password | sonar_pass ;
+      - name: Maven Compile for Java
+        run: |
+          if [ ${{ inputs.componentName }} == "shipping" ]; then
+            mvn clean compile
+          fi
+      - name: Code Quality Checks
+        run: /sonar-scanner/sonar-scanner-6.1.0.4477-linux-x64/bin/sonar-scanner -Dsonar.host.url=http://sonarqube-internal.harsharoboticshop.online:9000 -Dsonar.login=${{ steps.sonarqube.outputs.sonar_user }} -Dsonar.password=${{ steps.sonarqube.outputs.sonar_pass }} -Dsonar.qualitygate.wait=true -Dsonar.projectKey=${{ inputs.componentName }} ${{ inputs.SONAR_CLASS_PATH }}
+      - name: SAST Scan
+        run: echo SAST Scan
+      - name: SCA Check
+        run: echo SCA Check
+
+
+  build:
+    runs-on: self-hosted
+    needs: SECURITY-SCANS
+    steps:
+      - uses: actions/checkout@v4
       - run: |
-          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 975050062321.dkr.ecr.us-east-1.amazonaws.com                    
+          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 975050062321.dkr.ecr.us-east-1.amazonaws.com
           if [ ${{ inputs.componentName }} == "shipping" ]; then
             curl -v -L -O https://download.newrelic.com/newrelic/java-agent/newrelic-agent/current/newrelic-java.zip
             unzip newrelic-java.zip
-          fi         
-          e=$(aws ecr   describe-images --repository-name roboshop-${{ inputs.componentName }} | grep ${{ github.sha }} | wc -l)
+          fi
+          e=$(aws ecr describe-images --repository-name roboshop-${{ inputs.componentName }} | grep ${{ github.sha }} | wc -l)
           if [ $e -eq 0 ]; then
-            docker build --build-arg NR_API_KEY=${{ secrets.NR_API_KEY }} -t 975050062321.dkr.ecr.us-east-1.amazonaws.com/roboshop-${{ inputs.componentName }}:${{ github.sha }} .
+            docker build --build-arg NR_API_KEY=${{ secrets.NR_API_KEY }} -t 897722697588.dkr.ecr.us-east-1.amazonaws.com/roboshop-${{ inputs.componentName }}:${{ github.sha }} .
+            # We will check the security issues & we will stop here itself
+            trivy image 975050062321.dkr.ecr.us-east-1.amazonaws.com/roboshop-${{ inputs.componentName }}:${{ github.sha }} -s HIGH,CRITICAL --exit-code 1
             docker push 975050062321.dkr.ecr.us-east-1.amazonaws.com/roboshop-${{ inputs.componentName }}:${{ github.sha }}
           fi
+
 
   DEV:
     runs-on: self-hosted

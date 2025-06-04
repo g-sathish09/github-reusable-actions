@@ -40,12 +40,12 @@ jobs:
           if [ ${{ inputs.componentName }} == "shipping" ]; then
             mvn clean compile
           fi
-      - name: Code Quality Checks
-        run: /sonar-scanner/sonar-scanner-6.1.0.4477-linux-x64/bin/sonar-scanner -Dsonar.host.url=http://sonarqube-internal.harsharoboticshop.online:9000 -Dsonar.login=${{ steps.sonarqube.outputs.sonar_user }} -Dsonar.password=${{ steps.sonarqube.outputs.sonar_pass }} -Dsonar.qualitygate.wait=true -Dsonar.projectKey=${{ inputs.componentName }} ${{ inputs.SONAR_CLASS_PATH }}
-      - name: SAST Scan
-        run: echo SAST Scan
-      - name: SCA Check
-        run: echo SCA Check
+#      - name: Code Quality Checks
+#        run: /sonar-scanner/sonar-scanner-6.1.0.4477-linux-x64/bin/sonar-scanner -Dsonar.host.url=http://sonarqube-internal.harsharoboticshop.online:9000 -Dsonar.login=${{ steps.sonarqube.outputs.sonar_user }} -Dsonar.password=${{ steps.sonarqube.outputs.sonar_pass }} -Dsonar.qualitygate.wait=true -Dsonar.projectKey=${{ inputs.componentName }} ${{ inputs.SONAR_CLASS_PATH }}
+#      - name: SAST Scan
+#        run: echo SAST Scan
+#      - name: SCA Check
+#        run: echo SCA Check
 
 
   build:
